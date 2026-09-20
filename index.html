@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#f4f0e9" />
-    <title>Utrecht Datamap — Veiligheid in Utrecht</title>
+    <title>Utrecht Datamap — Utrecht in data</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="styles.css" />
   </head>
@@ -37,7 +37,7 @@
           </div>
         </section>
 
-        <section class="workspace" aria-label="Interactieve veiligheidskaart">
+        <section class="workspace" aria-label="Interactieve kaart van Utrecht">
           <aside class="control-panel">
             <div class="panel-heading">
               <div>
@@ -74,6 +74,10 @@
                 <span class="field-label">CATEGORIEËN</span>
                 <span class="active-count" id="activeCount">— indicatoren</span>
               </div>
+              <div class="filter-map-note">
+                <span class="filter-map-note-mark" aria-hidden="true">KAART</span>
+                <p>Kies één hoofdcategorie of één subcategorie voor de kaart.</p>
+              </div>
               <div class="layer-list" id="layerList"></div>
             </div>
 
@@ -83,8 +87,7 @@
             <div class="map-toolbar">
               <div>
                 <span class="eyebrow">DE KAART</span>
-                <h2>Veiligheidssignalen per gebied</h2>
-                <p class="map-selection-hint" id="mapSelectionHint">Selecteer een categorie of subcategorie voor de kaart.</p>
+                <h2>Data per gebied</h2>
               </div>
             </div>
 

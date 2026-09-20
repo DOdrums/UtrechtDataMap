@@ -457,7 +457,6 @@ function areaLevelLabel(level = visibleAreaLevel()) {
 }
 
 function renderMap() {
-  $('#mapSelectionHint').hidden = state.activeLayers.size > 0;
   boundaryFeatures = visibleBoundaryFeatures();
   districtFeatures = boundaryFeatures;
   if (!leafletMap || !boundaryFeatures.length) return;
@@ -675,9 +674,20 @@ function syncYearControls() {
   $('#yearMax').textContent = state.years[state.years.length - 1];
 }
 
-function render() {
+function syncYearToAvailableData() {
+  if (!state.activeIndicators.size) return;
+  const availableYears = new Set(state.data
+    .filter((record) => state.activeIndicators.has(indicatorKey(record.group, record.indicator)) && record.value !== null)
+    .map((record) => record.year));
+  if (availableYears.has(Number(state.year))) return;
+  const firstAvailableYear = state.years.find((year) => availableYears.has(year));
+  if (firstAvailableYear !== undefined) state.year = String(firstAvailableYear);
+}
+
+function render(syncYear = false) {
   state.filterCache.clear();
   syncActiveLayers();
+  if (syncYear) syncYearToAvailableData();
   renderLayerList();
   syncYearControls();
   renderMap();
@@ -694,7 +704,7 @@ function setGroup(group, isActive) {
     if (isActive) state.activeIndicators.add(key);
     else state.activeIndicators.delete(key);
   });
-  render();
+  render(isActive);
 }
 
 function setIndicator(group, indicator, isActive) {
@@ -702,7 +712,7 @@ function setIndicator(group, indicator, isActive) {
   const key = indicatorKey(group, indicator);
   if (isActive) state.activeIndicators.add(key);
   else state.activeIndicators.delete(key);
-  render();
+  render(isActive);
 }
 
 $('#layerList').addEventListener('click', (event) => {
