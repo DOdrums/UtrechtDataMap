@@ -163,7 +163,7 @@ select, .search-wrap input { font-size: 15px; }
 .indicator-toggle { opacity: .62; }
 .indicator-toggle:hover { background: var(--aqua-pale); }
 
-.map-tools { position: absolute; z-index: 1000; top: 14px; left: 14px; display: grid; gap: 10px; margin: 0; }
+.map-tools { position: absolute; z-index: 1000; top: 46px; left: 14px; display: grid; gap: 10px; margin: 0; }
 .map-zoom-controls { overflow: hidden; border: 1px solid #a9b8b5; border-radius: 8px; background: #fff; box-shadow: 0 2px 7px rgba(24, 61, 74, .2); }
 .map-control-button { display: grid; place-items: center; width: 39px; height: 39px; padding: 0; border: 0; background: #fff; color: #183d4a; cursor: pointer; font: 500 24px/1 Arial, sans-serif; transition: background .15s, color .15s; }
 .zoom-in-button span { position: relative; width: 16px; height: 16px; }

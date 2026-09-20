@@ -465,9 +465,7 @@ function renderMap() {
   const boundaryRecordIndex = buildBoundaryRecordIndex(filteredRecords(), level);
   const records = boundaryFeatures.flatMap((feature) => recordsForBoundaryArea(areaFromFeature(feature), boundaryRecordIndex));
   const displayedRecords = boundaryFeatures.map((feature) => getPrimaryRecord(areaFromFeature(feature), boundaryRecordIndex)).filter(Boolean);
-  const values = displayedRecords.map((record) => record.value).filter((value) => typeof value === 'number');
-  const minimum = values.length ? Math.min(...values) : 0;
-  const maximum = values.length ? Math.max(...values) : 1;
+  const colorScales = buildMapColorScales(displayedRecords);
   const collection = { type: 'FeatureCollection', features: boundaryFeatures };
   if (districtLayer) districtLayer.remove();
   districtLayer = L.geoJSON(collection, {
@@ -477,7 +475,7 @@ function renderMap() {
       const record = getPrimaryRecord(area, boundaryRecordIndex);
       const isDimmed = Boolean(state.search) && !recordsForBoundaryArea(area, boundaryRecordIndex).length;
       if (record) {
-        const normalized = maximum === minimum ? .6 : (record.value - minimum) / (maximum - minimum);
+        const normalized = normalizeMapValue(record.value, colorScales.get(record.group));
         return { color: METRIC_CONFIG[record.group].color, weight: level === 'buurten' ? 1 : 2, fillColor: colorMix(normalized, METRIC_CONFIG[record.group].color), fillOpacity: isDimmed ? .2 : .86, opacity: isDimmed ? .45 : 1 };
       }
       return { color: '#ffffff', weight: level === 'buurten' ? 1 : 2, fillColor: '#dcebe6', fillOpacity: isDimmed ? .08 : .35, opacity: isDimmed ? .35 : .8 };
@@ -497,8 +495,15 @@ function renderMap() {
       });
     },
   }).addTo(leafletMap);
-  $('#legendTitle').textContent = state.activeLayers.size === 1 ? METRIC_CONFIG[[...state.activeLayers][0]].title : 'Geselecteerde lagen';
-  $('#legendUnit').textContent = state.activeLayers.size === 1 ? mapLegendUnit([...state.activeLayers][0]) : 'gemengde eenheden';
+  const legendGroup = state.activeLayers.size === 1 ? [...state.activeLayers][0] : null;
+  const legendScale = legendGroup ? colorScales.get(legendGroup) : null;
+  $('#legendTitle').textContent = legendGroup ? METRIC_CONFIG[legendGroup].title : 'Geselecteerde lagen';
+  $('#legendUnit').textContent = legendGroup ? mapLegendUnit(legendGroup) : 'gemengde eenheden';
+  $('#legendMin').textContent = legendScale ? formatValue(legendScale.minimum, legendScale.unit) : 'lager';
+  $('#legendMax').textContent = legendScale ? formatValue(legendScale.maximum, legendScale.unit) : 'hoger';
+  $('#mapLegend .legend-gradient').style.background = legendGroup
+    ? `linear-gradient(90deg, ${colorMix(0, METRIC_CONFIG[legendGroup].color)}, ${colorMix(1, METRIC_CONFIG[legendGroup].color)})`
+    : '';
   const mappedAreas = new Set(records.map((record) => record.area));
   $('#mapStatus').textContent = `${state.year} · ${areaLevelLabel()} · ${mappedAreas.size} GEBIEDEN · FILTERWEERGAVE`;
 }
@@ -553,10 +558,32 @@ function centerMap() {
   else leafletMap.setView(UTRECHT_CENTER, UTRECHT_ZOOM, { animate: true });
 }
 
+function buildMapColorScales(records) {
+  const valuesByGroup = new Map();
+  const unitsByGroup = new Map();
+  records.forEach((record) => {
+    if (!Number.isFinite(record.value)) return;
+    if (!valuesByGroup.has(record.group)) valuesByGroup.set(record.group, []);
+    if (!unitsByGroup.has(record.group)) unitsByGroup.set(record.group, new Set());
+    valuesByGroup.get(record.group).push(record.value);
+    if (record.unit) unitsByGroup.get(record.group).add(record.unit);
+  });
+  return new Map([...valuesByGroup].map(([group, values]) => {
+    const units = [...unitsByGroup.get(group)];
+    return [group, { minimum: Math.min(...values), maximum: Math.max(...values), unit: units.length === 1 ? units[0] : '' }];
+  }));
+}
+
+function normalizeMapValue(value, scale) {
+  if (!scale || !Number.isFinite(value)) return .5;
+  if (scale.maximum === scale.minimum) return .6;
+  return Math.max(0, Math.min(1, (value - scale.minimum) / (scale.maximum - scale.minimum)));
+}
+
 function colorMix(amount, groupColor) {
   const base = [220, 239, 232];
   const target = hexToRgb(groupColor);
-  const strength = .18 + amount * .7;
+  const strength = .1 + Math.max(0, Math.min(1, amount)) * .82;
   return `rgb(${base.map((channel, index) => Math.round(channel + (target[index] - channel) * strength)).join(',')})`;
 }
 
