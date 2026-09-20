@@ -6,7 +6,7 @@ An interactive, browser-only Leaflet map for the Utrecht safety CSV exports. Eve
 
 This is a small static web app rather than a React application or a backend service:
 
-- `index.html` defines the page structure and loads Leaflet from its CDN.
+- `index.html` defines the page structure and loads the locally stored Leaflet library.
 - `styles.css` contains the visual design and responsive layout.
 - `app.js` parses both wide and long CSV layouts, normalizes the values, applies the filters, renders the map and table, and handles export.
 - `data/` contains eight Utrecht exports covering wijken and subwijken for safety experience, street intimidation, noise nuisance, and violence.
@@ -52,4 +52,4 @@ The source subwijk labels are grouped areas, for example `De Meern` and `Abstede
 
 The data source is [utrecht.incijfers.nl](https://utrecht.incijfers.nl/). Map boundaries are supplied separately by PDOK/CBS and are used only to draw the geographic context.
 
-An internet connection is needed for Leaflet, the OpenStreetMap basemap, and the PDOK wijk/buurt boundaries. The bundled safety CSVs remain local and are still available when the remote map data cannot be loaded.
+An internet connection is needed for the OpenStreetMap basemap and the PDOK wijk/buurt boundaries. Leaflet and the bundled safety CSVs are stored locally and remain available when the remote map data cannot be loaded.

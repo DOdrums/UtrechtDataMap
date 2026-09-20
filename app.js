@@ -1,3 +1,18 @@
+/**
+ * @typedef {Object} DataRecord
+ * @property {string} group
+ * @property {string} groupLabel
+ * @property {string} indicator
+ * @property {string} unit
+ * @property {number} year
+ * @property {string} area
+ * @property {number|null} value
+ * @property {string} source
+ * @property {string} file
+ * @property {string} [level]
+ */
+
+/** @type {DataRecord[]} */
 const DEMO_DATA = [
   { group: 'crime', groupLabel: 'Crime rates', indicator: 'Criminaliteit totaal', unit: '‰', year: 2021, area: 'West', value: 28.6, source: 'Politie / gemeente Utrecht', file: 'Veiligheid (wijken) - West.csv' },
   { group: 'crime', groupLabel: 'Crime rates', indicator: 'Criminaliteit totaal', unit: '‰', year: 2022, area: 'West', value: 29.5, source: 'Politie / gemeente Utrecht', file: 'Veiligheid (wijken) - West.csv' },
@@ -48,9 +63,59 @@ const DEMO_DATA = [
 const DEMO_GROUP_LABELS = { crime: 'Criminaliteit', violence: 'Geweld', street: 'Straatcriminaliteit', perception: 'Veiligheidsbeleving' };
 DEMO_DATA.forEach((record) => { record.groupLabel = DEMO_GROUP_LABELS[record.group] || record.groupLabel; });
 
-const AREA_POSITIONS = {
-  West: [242, 300], Noordwest: [239, 142], Overvecht: [388, 143], Noordoost: [548, 164], Binnenstad: [404, 260], Oost: [584, 303], Zuid: [390, 423], Zuidwest: [230, 464], 'Leidsche Rijn': [132, 332], 'Vleuten-De Meern': [120, 454]
-};
+/**
+ * @typedef {Object} BoundaryProperties
+ * @property {string} [gemeentenaam]
+ * @property {string} [wijknaam]
+ * @property {string} [wijkNaam]
+ * @property {string} [buurtnaam]
+ * @property {string} [__areaLevel]
+ * @property {string} [__areaName]
+ */
+
+/** @typedef {{ properties: BoundaryProperties }} BoundaryFeature */
+
+/**
+ * @typedef {Object} LeafletBounds
+ * @property {function(): boolean} isValid
+ * @property {function(number): LeafletBounds} pad
+ */
+
+/**
+ * @typedef {Object} LeafletMap
+ * @property {function(Array<number>, number, Object=): LeafletMap} setView
+ * @property {function(string, function): LeafletMap} on
+ * @property {function(): number} getZoom
+ * @property {function(): number} getMaxZoom
+ * @property {function(): number} getMinZoom
+ * @property {function(LeafletBounds, Object=): LeafletMap} fitBounds
+ * @property {function(number=, Object=): LeafletMap} zoomIn
+ * @property {function(number=, Object=): LeafletMap} zoomOut
+ */
+
+/**
+ * @typedef {Object} LeafletLayer
+ * @property {function(LeafletMap): LeafletLayer} addTo
+ * @property {function(): LeafletLayer} remove
+ * @property {function(): LeafletBounds} getBounds
+ * @property {function(string, Object): LeafletLayer} bindTooltip
+ * @property {function(string, function): LeafletLayer} on
+ * @property {function(Object): LeafletLayer} setStyle
+ * @property {function(LeafletLayer): void} resetStyle
+ */
+
+/**
+ * @typedef {Object} LeafletGeoJsonOptions
+ * @property {function(BoundaryFeature): Object} [style]
+ * @property {function(BoundaryFeature, LeafletLayer): void} [onEachFeature]
+ */
+
+/**
+ * @typedef {Object} LeafletApi
+ * @property {function(string, Object): LeafletMap} map
+ * @property {function(Object, LeafletGeoJsonOptions=): LeafletLayer} geoJSON
+ * @property {function(string, Object): LeafletLayer} tileLayer
+ */
 
 const METRIC_CONFIG = {
   intimidation: { color: '#dc7455', title: 'Straatintimidatie', icon: '◌', description: 'Enquêteresultaten over straatintimidatie' },
@@ -63,21 +128,53 @@ const METRIC_CONFIG = {
 
 const AVERAGE_GROUPS = new Set(['intimidation', 'perception', 'noise', 'violence']);
 const DATA_SOURCE = 'utrecht.incijfers.nl';
-const DATA_SOURCE_URL = 'https://utrecht.incijfers.nl/';
-const state = { data: DEMO_DATA.map((record) => ({ ...record, groupLabel: METRIC_CONFIG[record.group].title, level: 'wijken', source: DATA_SOURCE })), years: [], year: '2025', search: '', areaLevel: 'buurten', activeLayers: new Set(), activeIndicators: new Set(), aggregateGroups: new Set(), filtersInitialized: false, expandedGroups: new Set(), accordionGroups: new Set(), dataIndex: null, filterCache: new Map(), mapScale: 1, labelsVisible: false, showAllYears: false };
+const state = { data: DEMO_DATA.map((record) => ({ ...record, groupLabel: METRIC_CONFIG[record.group].title, level: 'wijken', source: DATA_SOURCE })), years: [], year: '2025', search: '', areaLevel: 'buurten', activeLayers: new Set(), activeIndicators: new Set(), aggregateGroups: new Set(), filtersInitialized: false, expandedGroups: new Set(), dataIndex: null, filterCache: new Map(), labelsVisible: false, showAllYears: false };
 const WIJK_API_URL = 'https://api.pdok.nl/cbs/wijken-en-buurten-2025/ogc/v1/collections/wijken/items?f=json&limit=100&filter=gemeentenaam%3D%27Utrecht%27';
 const BUURT_API_URL = 'https://api.pdok.nl/cbs/wijken-en-buurten-2025/ogc/v1/collections/buurten/items?f=json&limit=200&filter=gemeentenaam%3D%27Utrecht%27';
 const UTRECHT_CENTER = [52.0907, 5.1214];
 const UTRECHT_ZOOM = 11;
+/** @type {LeafletMap | null} */
 let leafletMap = null;
+/** @type {LeafletLayer | null} */
 let districtLayer = null;
+/** @type {BoundaryFeature[]} */
 let wijkFeatures = [];
+/** @type {BoundaryFeature[]} */
 let buurtFeatures = [];
+/** @type {BoundaryFeature[]} */
 let boundaryFeatures = [];
-let districtFeatures = [];
+/** @type {LeafletBounds | null} */
 let districtBounds = null;
 let tableRenderTimer = null;
-const $ = (selector) => document.querySelector(selector);
+/** @type {LeafletApi | undefined} */
+const leaflet = globalThis['L'];
+
+const elements = {
+  activeCount: document.querySelector('#activeCount'),
+  areaLevelSelect: document.querySelector('#areaLevelSelect'),
+  areaSearch: document.querySelector('#areaSearch'),
+  dataTableBody: document.querySelector('#dataTableBody'),
+  emptyState: document.querySelector('#emptyState'),
+  exportView: document.querySelector('#exportView'),
+  layerList: document.querySelector('#layerList'),
+  legendGradient: document.querySelector('#mapLegend .legend-gradient'),
+  legendMax: document.querySelector('#legendMax'),
+  legendMin: document.querySelector('#legendMin'),
+  legendTitle: document.querySelector('#legendTitle'),
+  legendUnit: document.querySelector('#legendUnit'),
+  mapStatus: document.querySelector('#mapStatus'),
+  resetFilters: document.querySelector('#resetFilters'),
+  resetMap: document.querySelector('#resetMap'),
+  showAllYears: document.querySelector('#showAllYears'),
+  tableHint: document.querySelector('#tableHint'),
+  toggleLabels: document.querySelector('#toggleLabels'),
+  yearMax: document.querySelector('#yearMax'),
+  yearMin: document.querySelector('#yearMin'),
+  yearRange: document.querySelector('#yearRange'),
+  yearValue: document.querySelector('#yearValue'),
+  zoomIn: document.querySelector('#zoomIn'),
+  zoomOut: document.querySelector('#zoomOut'),
+};
 
 function formatValue(value, unit = '') {
   if (value === null || value === undefined || Number.isNaN(value)) return '—';
@@ -109,7 +206,7 @@ function classifyIndicator(indicator, tile) {
 }
 
 function parsePeriodCell(value = '') {
-  const match = value.replace(/^\uFEFF/, '').trim().match(/^(.*?)(?:\s*\[(\d{4})\]|\|(\d{4}))\s*$/);
+  const match = value.replace(/^\uFEFF/, '').trim().match(/^(.*?)(?:\s*\[(\d{4})]|\|(\d{4}))\s*$/);
   return match ? { label: match[1].trim(), year: Number(match[2] || match[3]) } : null;
 }
 
@@ -119,25 +216,28 @@ function inferLevel(fileName, title = '') {
 
 function metricUnit(label, value = '') {
   if (/%/.test(label) || /%\s*$/.test(value.trim())) return '%';
-  if (/\[aantal\]/i.test(label) || /^aantal$/i.test(label.trim())) return 'aantal';
+  if (/\[aantal]/i.test(label) || /^aantal$/i.test(label.trim())) return 'aantal';
   if (/promillage|per\s+1000/i.test(label)) return '‰';
   return '';
 }
 
 function metricLabel(label, fallback = '') {
-  const cleaned = label.replace(/^%\s*/, '').replace(/\s*\[(?:aantal|promillage|percentage|%)\]\s*$/i, '').trim();
+  const cleaned = label.replace(/^%\s*/, '').replace(/\s*\[(?:aantal|promillage|percentage|%)]\s*$/i, '').trim();
   if (!cleaned || /^aantal$/i.test(cleaned)) return fallback;
   if (/^per\s+1000\s+inw\+arb$/i.test(cleaned)) return `${fallback} per 1000 inw+arb`;
   return cleaned;
 }
 
+/** @returns {DataRecord} */
 function makeRecord({ indicator, tile, unit, year, area, value, file, level }) {
   const group = classifyIndicator(indicator, `${tile} ${file}`);
   return { group, groupLabel: METRIC_CONFIG[group].title, indicator: prettifyIndicator(indicator), unit, year, area: area.trim() || 'onbekend', value: parseDutchNumber(value), source: DATA_SOURCE, file, level };
 }
 
 function parseCsv(text, fileName) {
+  /** @type {string[][]} */
   const rows = [];
+  /** @type {string[]} */
   let row = [];
   let cell = '';
   let quoted = false;
@@ -161,6 +261,7 @@ function parseCsv(text, fileName) {
   rows[0][0] = rows[0][0].replace(/^\uFEFF/, '');
   const title = rows[0][0].trim();
   const level = inferLevel(fileName, title);
+  /** @type {DataRecord[]} */
   const records = [];
   const wideHeaderIndex = rows.findIndex((values, index) => values[0].trim() === '' && parsePeriodCell(rows[index + 1]?.[0] || ''));
   if (wideHeaderIndex >= 0) {
@@ -247,6 +348,7 @@ function ensureDataIndex() {
   return state.dataIndex;
 }
 
+/** @returns {DataRecord[]} */
 function filteredRecords({ includeUnknown = false, includeMissing = false, allYears = false } = {}) {
   ensureDataIndex();
   const activeKey = [...state.activeIndicators].sort().join('\u001f');
@@ -286,6 +388,14 @@ function activeIndicatorCount() {
   return state.activeIndicators.size;
 }
 
+/**
+ * @param {string} area
+ * @param {string} group
+ * @param {DataRecord[]} records
+ * @param {number|string} [displayYear=state.year]
+ * @param {boolean} [matchArea=true]
+ * @returns {DataRecord|null}
+ */
 function averageRecordFor(area, group, records, displayYear = state.year, matchArea = true) {
   const areaKey = normalizeAreaKey(area);
   const candidates = records.filter((record) => (!matchArea || normalizeAreaKey(record.area) === areaKey) && record.group === group && record.value !== null);
@@ -395,6 +505,11 @@ function sourceAreaForFeature(feature) {
   return entry ? entry[0] : featureArea;
 }
 
+/**
+ * @param {DataRecord[]} records
+ * @param {string} level
+ * @returns {Map<string, DataRecord[]>}
+ */
 function buildBoundaryRecordIndex(records, level) {
   const index = new Map();
   records.forEach((record) => {
@@ -414,6 +529,7 @@ function buildBoundaryRecordIndex(records, level) {
   return index;
 }
 
+/** @returns {DataRecord[]} */
 function recordsForBoundaryArea(area, boundaryRecordIndex = null) {
   if (boundaryRecordIndex) return boundaryRecordIndex.get(normalizeAreaKey(area)) || [];
   const level = visibleAreaLevel();
@@ -428,14 +544,21 @@ function normalizeAreaKey(name = '') {
   return name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
 }
 
+/** @param {BoundaryFeature} feature */
 function featureAreaLevel(feature) {
   return feature.properties?.__areaLevel || 'wijken';
 }
 
+/** @param {BoundaryFeature} feature */
 function areaFromFeature(feature) {
   return feature.properties?.__areaName || normalizeWijkName(feature.properties?.wijknaam || feature.properties?.wijkNaam || feature.properties?.buurtnaam || '');
 }
 
+/**
+ * @param {BoundaryFeature[]} features
+ * @param {string} level
+ * @returns {BoundaryFeature[]}
+ */
 function decorateFeatures(features, level) {
   return features.filter((feature) => feature.properties?.gemeentenaam === 'Utrecht').map((feature) => {
     const area = level === 'buurten' ? feature.properties?.buurtnaam : normalizeWijkName(feature.properties?.wijknaam || feature.properties?.wijkNaam || '');
@@ -458,16 +581,16 @@ function areaLevelLabel(level = visibleAreaLevel()) {
 
 function renderMap() {
   boundaryFeatures = visibleBoundaryFeatures();
-  districtFeatures = boundaryFeatures;
   if (!leafletMap || !boundaryFeatures.length) return;
   const level = visibleAreaLevel();
   const boundaryRecordIndex = buildBoundaryRecordIndex(filteredRecords(), level);
   const records = boundaryFeatures.flatMap((feature) => recordsForBoundaryArea(areaFromFeature(feature), boundaryRecordIndex));
   const displayedRecords = boundaryFeatures.map((feature) => getPrimaryRecord(areaFromFeature(feature), boundaryRecordIndex)).filter(Boolean);
   const colorScales = buildMapColorScales(displayedRecords);
+  /** @type {{ type: string, features: BoundaryFeature[] }} */
   const collection = { type: 'FeatureCollection', features: boundaryFeatures };
   if (districtLayer) districtLayer.remove();
-  districtLayer = L.geoJSON(collection, {
+  districtLayer = leaflet.geoJSON(collection, {
     style: (feature) => {
       const area = areaFromFeature(feature);
       const level = featureAreaLevel(feature);
@@ -487,68 +610,64 @@ function renderMap() {
       const valueLabel = record ? `<span class="wijk-label-value">${formatValue(record.value, record.unit)} · ${record.indicator}</span>` : '<span class="wijk-label-value">geen bronwaarde</span>';
       const tooltip = `<span>${sourceArea}</span>${boundaryLabel}${valueLabel}`;
       layer.bindTooltip(tooltip, { permanent: state.labelsVisible, direction: 'center', className: 'wijk-label', opacity: 1 });
-      layer.on({
-        mouseover: () => layer.setStyle({ weight: featureAreaLevel(feature) === 'buurten' ? 2 : 3, color: '#183d4a' }),
-        mouseout: () => districtLayer.resetStyle(layer),
-        click: () => selectArea(record?.area || area),
-      });
+      layer.on('mouseover', () => layer.setStyle({ weight: featureAreaLevel(feature) === 'buurten' ? 2 : 3, color: '#183d4a' }));
+      layer.on('mouseout', () => districtLayer.resetStyle(layer));
+      layer.on('click', () => selectArea(record?.area || area));
     },
   }).addTo(leafletMap);
   const legendGroup = state.activeLayers.size === 1 ? [...state.activeLayers][0] : null;
   const legendScale = legendGroup ? colorScales.get(legendGroup) : null;
-  $('#legendTitle').textContent = legendGroup ? METRIC_CONFIG[legendGroup].title : 'Geselecteerde lagen';
-  $('#legendUnit').textContent = legendGroup ? mapLegendUnit(legendGroup) : 'gemengde eenheden';
-  $('#legendMin').textContent = legendScale ? formatValue(legendScale.minimum, legendScale.unit) : 'lager';
-  $('#legendMax').textContent = legendScale ? formatValue(legendScale.maximum, legendScale.unit) : 'hoger';
-  $('#mapLegend .legend-gradient').style.background = legendGroup
+  elements.legendTitle.textContent = legendGroup ? METRIC_CONFIG[legendGroup].title : 'Geselecteerde lagen';
+  elements.legendUnit.textContent = legendGroup ? mapLegendUnit(legendGroup) : 'gemengde eenheden';
+  elements.legendMin.textContent = legendScale ? formatValue(legendScale.minimum, legendScale.unit) : 'lager';
+  elements.legendMax.textContent = legendScale ? formatValue(legendScale.maximum, legendScale.unit) : 'hoger';
+  elements.legendGradient.style.background = legendGroup
     ? `linear-gradient(90deg, ${colorMix(0, METRIC_CONFIG[legendGroup].color)}, ${colorMix(1, METRIC_CONFIG[legendGroup].color)})`
     : '';
   const mappedAreas = new Set(records.map((record) => record.area));
-  $('#mapStatus').textContent = `${state.year} · ${areaLevelLabel()} · ${mappedAreas.size} GEBIEDEN · FILTERWEERGAVE`;
+  elements.mapStatus.textContent = `${state.year} · ${areaLevelLabel()} · ${mappedAreas.size} GEBIEDEN · FILTERWEERGAVE`;
 }
 
 function selectArea(area) {
-  $('#areaSearch').value = area;
+  elements.areaSearch.value = area;
   state.search = area;
   render();
   document.querySelector('.table-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function initializeLeafletMap() {
-  if (!window.L) return;
-  leafletMap = L.map('utrechtMap', { zoomControl: false, attributionControl: true, scrollWheelZoom: true }).setView(UTRECHT_CENTER, UTRECHT_ZOOM);
+  if (!leaflet) return;
+  leafletMap = leaflet.map('utrechtMap', { zoomControl: false, attributionControl: true, scrollWheelZoom: true }).setView(UTRECHT_CENTER, UTRECHT_ZOOM);
   leafletMap.on('zoomend', updateMapControls);
   updateMapControls();
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  leaflet.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
     attribution: '&copy; OpenStreetMap contributors',
   }).addTo(leafletMap);
   Promise.all([WIJK_API_URL, BUURT_API_URL].map((url) => fetch(url).then((response) => {
-    if (!response.ok) throw new Error('Unable to load area boundaries');
-    return response.json();
+    return response.ok ? response.json() : null;
   })))
     .then(([wijkCollection, buurtCollection]) => {
+      if (!wijkCollection || !buurtCollection) {
+        elements.mapStatus.textContent = 'KAARTGEGEVENS NIET BESCHIKBAAR';
+        return;
+      }
       wijkFeatures = decorateFeatures(wijkCollection.features || [], 'wijken');
       buurtFeatures = decorateFeatures(buurtCollection.features || [], 'buurten');
       boundaryFeatures = visibleBoundaryFeatures();
-      districtFeatures = boundaryFeatures;
-      districtBounds = L.geoJSON({ type: 'FeatureCollection', features: wijkFeatures }).getBounds();
+      districtBounds = leaflet.geoJSON({ type: 'FeatureCollection', features: wijkFeatures }).getBounds();
       if (districtBounds.isValid()) leafletMap.fitBounds(districtBounds.pad(.06), { animate: false });
       updateMapControls();
       render();
     })
-    .catch(() => { $('#mapStatus').textContent = 'KAARTGEGEVENS NIET BESCHIKBAAR'; });
-}
-
-function renderMarkers() {
-  // Marker rendering is handled by the geographic wijk polygons.
+    .catch(() => { elements.mapStatus.textContent = 'KAARTGEGEVENS NIET BESCHIKBAAR'; });
 }
 
 function updateMapControls() {
   const isReady = Boolean(leafletMap);
-  $('#zoomIn').disabled = !isReady || leafletMap.getZoom() >= leafletMap.getMaxZoom();
-  $('#zoomOut').disabled = !isReady || leafletMap.getZoom() <= leafletMap.getMinZoom();
-  $('#resetMap').disabled = !isReady;
+  elements.zoomIn.disabled = !isReady || leafletMap.getZoom() >= leafletMap.getMaxZoom();
+  elements.zoomOut.disabled = !isReady || leafletMap.getZoom() <= leafletMap.getMinZoom();
+  elements.resetMap.disabled = !isReady;
 }
 
 function centerMap() {
@@ -557,8 +676,11 @@ function centerMap() {
   else leafletMap.setView(UTRECHT_CENTER, UTRECHT_ZOOM, { animate: true });
 }
 
+/** @param {DataRecord[]} records */
 function buildMapColorScales(records) {
+  /** @type {Map<string, number[]>} */
   const valuesByGroup = new Map();
+  /** @type {Map<string, Set<string>>} */
   const unitsByGroup = new Map();
   records.forEach((record) => {
     if (!Number.isFinite(record.value)) return;
@@ -580,13 +702,20 @@ function normalizeMapValue(value, scale) {
 }
 
 function colorMix(amount, groupColor) {
+  /** @type {number[]} */
   const base = [220, 239, 232];
   const target = hexToRgb(groupColor);
   const strength = .1 + Math.max(0, Math.min(1, amount)) * .82;
   return `rgb(${base.map((channel, index) => Math.round(channel + (target[index] - channel) * strength)).join(',')})`;
 }
 
-function hexToRgb(hex) { return hex.replace('#', '').match(/.{2}/g).map((chunk) => parseInt(chunk, 16)); }
+function hexToRgb(hex) {
+  const normalized = hex.replace('#', '');
+  /** @type {number[]} */
+  const channels = [];
+  for (let index = 0; index < normalized.length; index += 2) channels.push(parseInt(normalized.slice(index, index + 2), 16));
+  return channels;
+}
 
 function yearChangeFor(record) {
   if (record.value === null) return null;
@@ -602,13 +731,19 @@ function yearChangeLabel(record) {
   return `<span class="table-change ${tone}">${direction}${formatValue(change.value, record.unit)} <small>t.o.v. ${change.year}</small></span>`;
 }
 
+function renderFallbackData() {
+  state.years = [...new Set(state.data.map((record) => record.year))].sort((a, b) => a - b);
+  syncActiveLayers();
+  render();
+}
+
 function renderTable() {
-  const body = $('#dataTableBody');
+  const body = elements.dataTableBody;
   const records = [...filteredRecords({ includeMissing: true, allYears: state.showAllYears })].sort((a, b) => b.year - a.year || a.area.localeCompare(b.area) || a.indicator.localeCompare(b.indicator));
   body.innerHTML = records.map((record) => `<tr><td>${record.area}</td><td>${record.level === 'buurten' ? 'Subwijk' : 'Wijk'}</td><td><span class="table-tag">${METRIC_CONFIG[record.group]?.title || record.groupLabel}</span>${record.indicator}</td><td>${record.year}</td><td>${formatValue(record.value, record.unit)}</td><td>${yearChangeLabel(record)}</td><td>${record.source}</td></tr>`).join('');
-  $('#emptyState').hidden = records.length > 0;
+  elements.emptyState.hidden = records.length > 0;
   const yearHint = state.showAllYears ? 'alle jaren' : state.year;
-  $('#tableHint').textContent = `${records.length} actieve records • ${yearHint} • — betekent niet beschikbaar in de bron`;
+  elements.tableHint.textContent = `${records.length} actieve records • ${yearHint} • — betekent niet beschikbaar in de bron`;
 }
 
 function scheduleTableRender() {
@@ -635,13 +770,12 @@ function syncActiveLayers(reset = false) {
 }
 
 function renderLayerList() {
-  $('#layerList').querySelectorAll('details[data-filter-category]').forEach((category) => {
+  elements.layerList.querySelectorAll('details[data-filter-category]').forEach((category) => {
     if (category.open) state.expandedGroups.add(category.dataset.filterCategory);
     else state.expandedGroups.delete(category.dataset.filterCategory);
   });
   const groups = availableGroups();
-  state.accordionGroups = new Set(groups);
-  $('#layerList').innerHTML = groups.map((group) => {
+  elements.layerList.innerHTML = groups.map((group) => {
     const config = METRIC_CONFIG[group] || METRIC_CONFIG.crime;
     const indicators = availableIndicators(group);
     const activeIndicators = indicators.filter((indicator) => state.activeIndicators.has(indicatorKey(group, indicator)));
@@ -655,7 +789,7 @@ function renderLayerList() {
     }).join('');
     return `<details class="layer-category" data-filter-category="${group}"${state.expandedGroups.has(group) ? ' open' : ''}><summary class="layer-category-summary"><label class="layer-toggle layer-group-toggle${someActive ? ' is-active' : ''}${someActive && !allActive ? ' is-partial' : ''}" data-layer-group="${group}"><input type="checkbox"${allActive ? ' checked' : ''} /><span class="toggle-box"><span></span></span><span class="layer-swatch ${group}" style="background:${config.color}"></span><span class="layer-copy"><strong>${escapeHtml(config.title)}</strong><small>${indicators.length} indicatoren${averageLabel}</small></span></label><span class="category-chevron" aria-hidden="true"></span></summary><div class="indicator-list">${indicatorRows}</div></details>`;
   }).join('');
-  $('#layerList').querySelectorAll('.layer-group-toggle input').forEach((input) => {
+  elements.layerList.querySelectorAll('.layer-group-toggle input').forEach((input) => {
     const group = input.closest('.layer-group-toggle').dataset.layerGroup;
     const indicators = availableIndicators(group);
     const active = indicators.filter((indicator) => state.activeIndicators.has(indicatorKey(group, indicator)));
@@ -664,20 +798,21 @@ function renderLayerList() {
 }
 
 function syncYearControls() {
-  const range = $('#yearRange');
+  const range = elements.yearRange;
   if (!state.years.length) return;
   const selectedIndex = Math.max(0, state.years.indexOf(Number(state.year)));
   range.max = String(state.years.length - 1);
   range.value = String(selectedIndex);
-  $('#yearValue').textContent = state.years[selectedIndex];
-  $('#yearMin').textContent = state.years[0];
-  $('#yearMax').textContent = state.years[state.years.length - 1];
+  elements.yearValue.textContent = state.years[selectedIndex];
+  elements.yearMin.textContent = state.years[0];
+  elements.yearMax.textContent = state.years[state.years.length - 1];
 }
 
 function syncYearToAvailableData() {
   if (!state.activeIndicators.size) return;
+  const level = visibleAreaLevel();
   const availableYears = new Set(state.data
-    .filter((record) => state.activeIndicators.has(indicatorKey(record.group, record.indicator)) && record.value !== null)
+    .filter((record) => record.level === level && state.activeIndicators.has(indicatorKey(record.group, record.indicator)) && record.value !== null)
     .map((record) => record.year));
   if (availableYears.has(Number(state.year))) return;
   const firstAvailableYear = state.years.find((year) => availableYears.has(year));
@@ -693,7 +828,7 @@ function render(syncYear = false) {
   renderMap();
   scheduleTableRender();
   const totalIndicators = new Set(state.data.map((record) => indicatorKey(record.group, record.indicator))).size;
-  $('#activeCount').textContent = `${activeIndicatorCount()} / ${totalIndicators} indicatoren`;
+  elements.activeCount.textContent = `${activeIndicatorCount()} / ${totalIndicators} indicatoren`;
 }
 
 function setGroup(group, isActive) {
@@ -715,7 +850,7 @@ function setIndicator(group, indicator, isActive) {
   render(isActive);
 }
 
-$('#layerList').addEventListener('click', (event) => {
+elements.layerList.addEventListener('click', (event) => {
   const indicatorLabel = event.target.closest('.indicator-toggle');
   if (indicatorLabel) {
     event.preventDefault();
@@ -733,23 +868,23 @@ $('#layerList').addEventListener('click', (event) => {
   setGroup(group, shouldActivate);
 });
 
-$('#layerList').addEventListener('toggle', (event) => {
+elements.layerList.addEventListener('toggle', (event) => {
   const category = event.target.closest('details[data-filter-category]');
   if (!category) return;
   if (category.open) state.expandedGroups.add(category.dataset.filterCategory);
   else state.expandedGroups.delete(category.dataset.filterCategory);
 });
-$('#yearRange').addEventListener('input', (event) => { state.year = String(state.years[Number(event.target.value)]); render(); });
-$('#areaSearch').addEventListener('input', (event) => { state.search = event.target.value.trim(); render(); });
-$('#areaLevelSelect').addEventListener('change', (event) => { state.areaLevel = event.target.value; render(); });
-$('#showAllYears').addEventListener('change', (event) => { state.showAllYears = event.currentTarget.checked; renderTable(); });
-$('#resetFilters').addEventListener('click', () => { state.year = String(state.years[state.years.length - 1] || 2025); state.search = ''; state.areaLevel = 'buurten'; state.activeIndicators = new Set(); state.activeLayers = new Set(); state.aggregateGroups = new Set(); $('#areaSearch').value = ''; $('#areaLevelSelect').value = state.areaLevel; render(); });
-$('#zoomIn').addEventListener('click', () => { if (leafletMap) leafletMap.zoomIn(1, { animate: true }); });
-$('#zoomOut').addEventListener('click', () => { if (leafletMap) leafletMap.zoomOut(1, { animate: true }); });
-$('#resetMap').addEventListener('click', centerMap);
-$('#toggleLabels').addEventListener('click', (event) => { state.labelsVisible = !state.labelsVisible; event.currentTarget.textContent = state.labelsVisible ? 'Labels verbergen' : 'Labels tonen'; renderMap(); });
+elements.yearRange.addEventListener('input', (event) => { state.year = String(state.years[Number(event.target.value)]); render(); });
+elements.areaSearch.addEventListener('input', (event) => { state.search = event.target.value.trim(); render(); });
+elements.areaLevelSelect.addEventListener('change', (event) => { state.areaLevel = event.target.value; render(); });
+elements.showAllYears.addEventListener('change', (event) => { state.showAllYears = event.currentTarget.checked; renderTable(); });
+elements.resetFilters.addEventListener('click', () => { state.year = String(state.years[state.years.length - 1] || 2025); state.search = ''; state.areaLevel = 'buurten'; state.activeIndicators = new Set(); state.activeLayers = new Set(); state.aggregateGroups = new Set(); elements.areaSearch.value = ''; elements.areaLevelSelect.value = state.areaLevel; render(); });
+elements.zoomIn.addEventListener('click', () => { if (leafletMap) leafletMap.zoomIn(1, { animate: true }); });
+elements.zoomOut.addEventListener('click', () => { if (leafletMap) leafletMap.zoomOut(1, { animate: true }); });
+elements.resetMap.addEventListener('click', centerMap);
+elements.toggleLabels.addEventListener('click', (event) => { state.labelsVisible = !state.labelsVisible; event.currentTarget.textContent = state.labelsVisible ? 'Labels verbergen' : 'Labels tonen'; renderMap(); });
 
-$('#exportView').addEventListener('click', () => {
+elements.exportView.addEventListener('click', () => {
   const rows = filteredRecords({ includeMissing: true, allYears: state.showAllYears }); const header = 'Gebied,Niveau,Indicator,Categorie,Jaar,Waarde,Eenheid,Stijging t.o.v. vorig jaar,Bron'; const csv = [header, ...rows.map((record) => { const change = yearChangeFor(record); const changeLabel = change ? `${change.value > 0 ? '+' : ''}${formatValue(change.value, record.unit)} t.o.v. ${change.year}` : ''; return [record.area, record.level === 'buurten' ? 'Subwijk' : 'Wijk', record.indicator, METRIC_CONFIG[record.group]?.title || record.groupLabel, record.year, record.value === null ? '' : record.value, record.unit, changeLabel, record.source].map((cell) => `"${String(cell).replaceAll('"', '""')}"`).join(','); })].join('\n');
   const link = document.createElement('a'); link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); link.download = 'utrecht-datamap-view.csv'; link.click(); URL.revokeObjectURL(link.href);
 });
@@ -767,22 +902,26 @@ async function loadBundledData() {
   ];
   try {
     const responses = await Promise.all(files.map((file) => fetch(`data/${encodeURIComponent(file)}`)));
-    if (responses.some((response) => !response.ok)) throw new Error('Niet alle gebundelde CSV-bestanden konden worden geladen');
+    if (responses.some((response) => !response.ok)) {
+      renderFallbackData();
+      return;
+    }
     const imported = (await Promise.all(responses.map(async (response, index) => parseCsv(await response.text(), files[index])))).flat();
     const unique = new Map(imported.map((record) => [`${record.level}|${record.group}|${record.indicator}|${record.unit}|${record.year}|${record.area}|${record.value}`, record]));
-    if (!unique.size) throw new Error('Geen leesbare gegevens gevonden');
+    if (!unique.size) {
+      renderFallbackData();
+      return;
+    }
     state.data = [...unique.values()];
     state.years = [...new Set(state.data.map((record) => record.year))].sort((a, b) => a - b);
     state.year = String(state.years[state.years.length - 1] || 2025);
     syncActiveLayers();
     render();
-  } catch (error) {
-    state.years = [...new Set(state.data.map((record) => record.year))].sort((a, b) => a - b);
-    syncActiveLayers();
-    render();
+  } catch {
+    renderFallbackData();
   }
 }
 
 render();
 initializeLeafletMap();
-loadBundledData();
+void loadBundledData();
