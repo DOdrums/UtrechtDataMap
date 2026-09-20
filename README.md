@@ -33,11 +33,13 @@ Open <http://localhost:4173> after starting the server. Stop it with `Ctrl+C` in
 
 ## Using the map
 
-- Drag the **Year** slider across the available years (2006–2025), or enable **Show all years**.
+- Drag the **Year** slider across the available years (2006–2025).
 - Search for a wijk or subwijk to narrow the map, cards, and source table.
-- Use **Map detail** to choose **Wijken**, **Subwijken (buurten)**, or **Auto · match data**. Auto prefers the more detailed subwijk boundaries when subwijk data is available.
+- Use **Map detail** to choose **Wijken** or **Subwijken (buurten)**. The map opens on the more detailed subwijk boundaries.
 - Open the **Data categories** accordions to see every individual measure from the CSVs. Toggle a whole category or select individual measures; the active measure count, map, insight cards, table, and export all follow those selections.
-- Click a wijk or subwijk on the map to select it in the area search; use **Recenter** to restore the Utrecht extent.
+- Selecting a whole category calculates an arithmetic average per area and year for its available sub-indicators. Missing values are ignored; selecting an individual sub-indicator switches the map and cards back to that indicator's value.
+- Averages are available for street intimidation, safety experience, noise nuisance, and violence. Noise nuisance contains both counts and rates per 1,000; those units are never averaged together, and the map uses the rate series for its category average.
+- Click a wijk or subwijk on the map to select it in the area search; use **Centreren** to restore the Utrecht extent.
 - **Export view** downloads the records matching the active filters as a CSV file.
 
 ## Data notes

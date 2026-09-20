@@ -1,155 +1,147 @@
 <!doctype html>
-<html lang="en">
+<html lang="nl">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#f4f0e9" />
-    <title>Utrecht Datamap — Safety in Utrecht</title>
+    <title>Utrecht Datamap — Veiligheid in Utrecht</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <div class="app-shell">
       <header class="topbar">
-        <a class="brand" href="#top" aria-label="Utrecht Datamap home">
+        <a class="brand" href="#top" aria-label="Naar begin van Utrecht Datamap">
           <span class="brand-mark"><i></i><i></i><i></i></span>
           <span>Utrecht <b>datamap</b></span>
         </a>
         <div class="topbar-meta">
-          <span class="eyebrow">PUBLIC SAFETY / WIJKEN &amp; SUBWIJKEN</span>
+          <span class="eyebrow">UTRECHT IN CIJFERS / WIJKEN &amp; SUBWIJKEN</span>
           <span class="status-dot" aria-hidden="true"></span>
-          <span>Local data view</span>
+          <span>Lokale gegevensweergave</span>
         </div>
       </header>
 
       <main id="top">
         <section class="hero">
           <div class="hero-copy">
-            <div class="kicker"><span class="kicker-line"></span> CITY INTELLIGENCE / 2006—2025</div>
-            <h1>See what safety<br /><em>feels like</em> in Utrecht.</h1>
-            <p class="hero-lede">Explore reported incidents and lived experience across the city. Turn layers on and off to find the story behind the numbers.</p>
+            <div class="kicker"><span class="kicker-line"></span> STADSINFORMATIE / 2006—2025</div>
+            <h1>Ontdek <em>Utrecht</em> door data.</h1>
+            <p class="hero-lede">Verken interactieve visualisaties van Utrechtse data. Zet lagen aan of uit, vergelijk gebieden en ontdek het verhaal achter de cijfers.</p>
           </div>
           <div class="hero-note">
-            <span class="hero-note-label">CURRENT VIEW</span>
+            <span class="hero-note-label">HUIDIGE WEERGAVE</span>
             <strong>Utrecht</strong>
             <span class="hero-note-rule"></span>
-            <span>8 source files · utrecht.incijfers.nl</span>
+            <span>8 bronbestanden • utrecht.incijfers.nl</span>
           </div>
         </section>
 
-        <section class="workspace" aria-label="Interactive safety map">
+        <section class="workspace" aria-label="Interactieve veiligheidskaart">
           <aside class="control-panel">
             <div class="panel-heading">
               <div>
-                <span class="eyebrow">01 / FILTERS</span>
-                <h2>Shape the view</h2>
+                <span class="eyebrow">FILTERS</span>
               </div>
               <button class="text-button" id="resetFilters" type="button">Reset</button>
             </div>
 
             <div class="field-heading">
-              <label class="field-label" for="yearRange">YEAR</label>
+              <label class="field-label" for="yearRange">JAAR</label>
               <output class="field-value" id="yearValue" for="yearRange">2025</output>
             </div>
             <div class="range-wrap">
-              <input id="yearRange" type="range" min="0" max="0" value="0" step="1" aria-label="Choose a year" />
+              <input id="yearRange" type="range" min="0" max="0" value="0" step="1" aria-label="Kies een jaar" />
               <div class="range-scale"><span id="yearMin">—</span><span id="yearMax">—</span></div>
             </div>
-            <label class="all-years-toggle"><input id="allYears" type="checkbox" /> <span>Show all years</span></label>
 
-            <label class="field-label" for="areaSearch">FIND AN AREA</label>
+            <label class="field-label" for="areaSearch">GEBIED ZOEKEN</label>
             <div class="search-wrap">
               <span class="search-icon" aria-hidden="true"></span>
-              <input id="areaSearch" type="search" placeholder="Search wijk or subwijk" autocomplete="off" />
+              <input id="areaSearch" type="search" placeholder="Zoek wijk of subwijk" autocomplete="off" />
             </div>
 
-            <label class="field-label" for="areaLevelSelect">MAP DETAIL</label>
+            <label class="field-label" for="areaLevelSelect">KAARTDETAIL</label>
             <div class="select-wrap">
-              <select id="areaLevelSelect" aria-label="Choose map detail">
-                <option value="auto">Auto · match data</option>
+              <select id="areaLevelSelect" aria-label="Kies kaartdetail">
                 <option value="wijken">Wijken</option>
-                <option value="buurten">Subwijken (buurten)</option>
+                <option value="buurten" selected>Subwijken (buurten)</option>
               </select>
             </div>
 
             <div class="filter-group">
               <div class="group-title-row">
-                <span class="field-label">DATA CATEGORIES</span>
-                <span class="active-count" id="activeCount">— measures</span>
+                <span class="field-label">CATEGORIEËN</span>
+                <span class="active-count" id="activeCount">— indicatoren</span>
               </div>
-              <p class="filter-help">Open a category to select individual measures.</p>
               <div class="layer-list" id="layerList"></div>
             </div>
 
-            <div class="panel-divider"></div>
-            <div class="data-note">
-              <span class="note-icon">i</span>
-              <p>Source: <a href="https://utrecht.incijfers.nl/" target="_blank" rel="noreferrer">utrecht.incijfers.nl</a>. Blank, dot and dash values stay unavailable.</p>
-            </div>
           </aside>
 
           <section class="map-column">
             <div class="map-toolbar">
               <div>
-                <span class="eyebrow">02 / THE MAP</span>
-                <h2>Safety signals by area</h2>
-              </div>
-              <div class="map-tools">
-                <button class="icon-button" id="zoomOut" type="button" aria-label="Zoom out">−</button>
-                <button class="icon-button" id="zoomIn" type="button" aria-label="Zoom in">+</button>
-                <button class="fit-button" id="resetMap" type="button"><span class="fit-icon"></span> Recenter</button>
+                <span class="eyebrow">DE KAART</span>
+                <h2>Veiligheidssignalen per gebied</h2>
+                <p class="map-selection-hint" id="mapSelectionHint">Selecteer een categorie of subcategorie voor de kaart.</p>
               </div>
             </div>
 
             <div class="map-frame" id="mapFrame">
-              <div class="map-context-label"><span class="live-pulse"></span><span id="mapStatus">LIVE FILTER VIEW</span></div>
+              <div class="map-context-label"><span class="live-pulse"></span><span id="mapStatus">LIVE FILTERWEERGAVE</span></div>
+              <div class="map-tools" aria-label="Kaartbediening">
+                <div class="map-zoom-controls">
+                  <button class="map-control-button zoom-in-button" id="zoomIn" type="button" aria-label="Inzoomen" title="Inzoomen" disabled><span aria-hidden="true"></span></button>
+                  <button class="map-control-button" id="zoomOut" type="button" aria-label="Uitzoomen" title="Uitzoomen" disabled>−</button>
+                </div>
+                <button class="map-control-button center-map-button" id="resetMap" type="button" aria-label="Kaart centreren" title="Kaart centreren" disabled>
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v4M12 18v4M2 12h4M18 12h4"></path></svg>
+                </button>
+              </div>
               <div class="map-scale"><span></span><small>2 km</small></div>
               <div class="compass" aria-hidden="true"><span>N</span><i></i></div>
               <div class="map-grid" aria-hidden="true"></div>
-              <div id="utrechtMap" class="leaflet-map" role="img" aria-label="Geographic map of Utrecht wijken and subwijken"></div>
+              <div id="utrechtMap" class="leaflet-map" role="img" aria-label="Geografische kaart van Utrechtse wijken en subwijken"></div>
               <div class="map-legend" id="mapLegend">
-                <div class="legend-head"><span id="legendTitle">Selected layers</span><span id="legendUnit">mixed units</span></div>
+                <div class="legend-head"><span id="legendTitle">Geselecteerde lagen</span><span id="legendUnit">gemengde eenheden</span></div>
                 <div class="legend-gradient"></div>
-                <div class="legend-scale"><span>lower</span><span>higher</span></div>
-                <div class="legend-key"><span class="legend-key-dot"></span><span>area with source value</span></div>
+                <div class="legend-scale"><span>lager</span><span>hoger</span></div>
+                <div class="legend-key"><span class="legend-key-dot"></span><span>gebied met bronwaarde</span></div>
               </div>
               <div class="map-hover-card" id="mapHoverCard" aria-hidden="true"></div>
             </div>
 
-            <div class="map-footnote"><span class="footnote-pin"></span><span>Values: <a href="https://utrecht.incijfers.nl/" target="_blank" rel="noreferrer">utrecht.incijfers.nl</a>. Boundaries: CBS Wijken en Buurten 2025 via PDOK.</span><button class="text-button" id="toggleLabels" type="button">Hide labels</button></div>
+            <div class="map-footnote"><span class="footnote-pin"></span><span>Waarden: <a href="https://utrecht.incijfers.nl/" target="_blank" rel="noreferrer">utrecht.incijfers.nl</a>. Grenzen: CBS Wijken en Buurten 2025 via PDOK.</span><button class="text-button" id="toggleLabels" type="button">Labels tonen</button></div>
           </section>
-        </section>
-
-        <section class="insight-section">
-          <div class="section-header">
-            <div>
-              <span class="eyebrow">03 / READ THE SIGNALS</span>
-              <h2 id="insightTitle">West in 2025</h2>
-            </div>
-            <div class="result-meta"><span id="resultCount">0</span> visible measures <span class="meta-separator">·</span> <span id="dataState">Demo data</span></div>
-          </div>
-          <div class="insight-grid" id="insightGrid"></div>
         </section>
 
         <section class="table-section">
           <div class="section-header compact">
             <div>
-              <span class="eyebrow">04 / ALL RECORDS</span>
-              <h2>Source detail</h2>
+              <span class="eyebrow">ALLE GEGEVENS</span>
+              <h2>Brondetails</h2>
             </div>
-            <div class="table-actions"><span id="tableHint">Showing active layers</span><button class="text-button" id="exportView" type="button">Export view <span>↗</span></button></div>
+            <div class="table-actions"><span id="tableHint">Actieve lagen weergeven</span><button class="text-button" id="exportView" type="button">Weergave exporteren <span>↗</span></button></div>
+          </div>
+          <div class="data-view-control">
+            <label class="year-toggle">
+              <input id="showAllYears" type="checkbox" />
+              <span class="year-toggle-track" aria-hidden="true"></span>
+              <span>Toon alle jaren in de tabel</span>
+            </label>
           </div>
           <div class="data-table-wrap">
             <table class="data-table">
-              <thead><tr><th>Area</th><th>Level</th><th>Measure</th><th>Year</th><th>Value</th><th>Source</th></tr></thead>
+              <thead><tr><th>Gebied</th><th>Niveau</th><th>Indicator</th><th>Jaar</th><th>Waarde</th><th>Stijging t.o.v. vorig jaar</th><th>Bron</th></tr></thead>
               <tbody id="dataTableBody"></tbody>
             </table>
-            <div class="empty-state" id="emptyState" hidden>No records match these filters.</div>
+            <div class="empty-state" id="emptyState" hidden>Geen gegevens gevonden met deze filters.</div>
           </div>
         </section>
       </main>
 
-      <footer class="footer"><span>UTRECHT DATAMAP</span><span>Built for exploration, not official reporting.</span><span>Data: <a href="https://utrecht.incijfers.nl/" target="_blank" rel="noreferrer">utrecht.incijfers.nl</a></span></footer>
+      <footer class="footer"><span>UTRECHT DATAMAP</span><span>Gemaakt voor verkenning, niet voor officiële rapportage.</span><span>Gegevens: <a href="https://utrecht.incijfers.nl/" target="_blank" rel="noreferrer">utrecht.incijfers.nl</a></span></footer>
     </div>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="app.js"></script>
