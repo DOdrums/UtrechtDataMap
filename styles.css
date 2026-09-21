@@ -211,6 +211,10 @@ select, .search-wrap input { border-radius: 8px; }
 .year-toggle input:checked + .year-toggle-track { background: var(--teal); }
 .year-toggle input:checked + .year-toggle-track::after { transform: translateX(16px); }
 .year-toggle input:focus-visible + .year-toggle-track { outline: 3px solid rgba(40, 125, 123, .25); outline-offset: 2px; }
+.table-loading { display: flex; align-items: center; gap: 8px; margin: -6px 0 12px; color: var(--muted); font: 500 12px 'DM Sans', sans-serif; }
+.table-loading[hidden] { display: none; }
+.loading-spinner { width: 15px; height: 15px; flex: 0 0 auto; border: 2px solid var(--line-dark); border-top-color: var(--teal); border-radius: 50%; animation: table-loading-spin .75s linear infinite; }
+@keyframes table-loading-spin { to { transform: rotate(360deg); } }
 
 /* Keep the data sections calm, but give them enough character to feel connected to the map. */
 .insight-card { border-color: var(--line-dark); box-shadow: 0 8px 22px rgba(24, 61, 74, .045); transition: border-color .18s, box-shadow .18s, transform .18s; }

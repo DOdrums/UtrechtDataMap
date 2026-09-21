@@ -115,6 +115,7 @@ const elements = {
   resetFilters: document.querySelector('#resetFilters'),
   resetMap: document.querySelector('#resetMap'),
   showAllYears: document.querySelector('#showAllYears'),
+  tableLoading: document.querySelector('#tableLoading'),
   tableHint: document.querySelector('#tableHint'),
   toggleLabels: document.querySelector('#toggleLabels'),
   yearMax: document.querySelector('#yearMax'),
@@ -702,6 +703,7 @@ function renderTable() {
     elements.emptyState.textContent = 'De gegevens konden niet worden geladen. Controleer of de CSV-bestanden beschikbaar zijn.';
     elements.emptyState.hidden = false;
     elements.tableHint.textContent = 'Gegevens niet beschikbaar';
+    elements.tableLoading.hidden = true;
     return;
   }
   const records = [...filteredRecords({ includeMissing: true, allYears: state.showAllYears })].sort((a, b) => b.year - a.year || a.area.localeCompare(b.area) || a.indicator.localeCompare(b.indicator));
@@ -710,14 +712,17 @@ function renderTable() {
   elements.emptyState.hidden = records.length > 0;
   const yearHint = state.showAllYears ? 'alle jaren' : state.year;
   elements.tableHint.textContent = `${records.length} actieve records • ${yearHint} • — betekent niet beschikbaar in de bron`;
+  elements.tableLoading.hidden = true;
 }
 
 function scheduleTableRender() {
   if (tableRenderTimer !== null) clearTimeout(tableRenderTimer);
+  elements.tableLoading.hidden = !state.showAllYears;
+  if (state.showAllYears) elements.tableHint.textContent = 'Alle jaren laden…';
   tableRenderTimer = setTimeout(() => {
     tableRenderTimer = null;
     renderTable();
-  }, 0);
+  }, state.showAllYears ? 16 : 0);
 }
 
 function syncActiveLayers(reset = false) {
@@ -806,7 +811,15 @@ function render(syncYear = false) {
   }
 }
 
+function clearOtherGroups(group) {
+  availableGroups().filter((otherGroup) => otherGroup !== group).forEach((otherGroup) => {
+    availableIndicators(otherGroup).forEach((indicator) => state.activeIndicators.delete(indicatorKey(otherGroup, indicator)));
+    state.aggregateGroups.delete(otherGroup);
+  });
+}
+
 function setGroup(group, isActive) {
+  if (isActive) clearOtherGroups(group);
   if (isActive && AVERAGE_GROUPS.has(group)) state.aggregateGroups.add(group);
   else state.aggregateGroups.delete(group);
   availableIndicators(group).forEach((indicator) => {
@@ -818,6 +831,7 @@ function setGroup(group, isActive) {
 }
 
 function setIndicator(group, indicator, isActive) {
+  if (isActive) clearOtherGroups(group);
   state.aggregateGroups.delete(group);
   const key = indicatorKey(group, indicator);
   if (isActive) state.activeIndicators.add(key);
@@ -852,7 +866,7 @@ elements.layerList.addEventListener('toggle', (event) => {
 elements.yearRange.addEventListener('input', (event) => { state.year = String(state.years[Number(event.target.value)]); render(); });
 elements.areaSearch.addEventListener('input', (event) => { state.search = event.target.value.trim(); render(); });
 elements.areaLevelSelect.addEventListener('change', (event) => { state.areaLevel = event.target.value; render(); });
-elements.showAllYears.addEventListener('change', (event) => { state.showAllYears = event.currentTarget.checked; renderTable(); });
+elements.showAllYears.addEventListener('change', (event) => { state.showAllYears = event.currentTarget.checked; scheduleTableRender(); });
 elements.resetFilters.addEventListener('click', () => { state.year = String(state.years[state.years.length - 1] || 2025); state.search = ''; state.areaLevel = 'buurten'; state.activeIndicators = new Set(); state.activeLayers = new Set(); state.aggregateGroups = new Set(); elements.areaSearch.value = ''; elements.areaLevelSelect.value = state.areaLevel; render(); });
 elements.zoomIn.addEventListener('click', () => { if (leafletMap) leafletMap.zoomIn(1, { animate: true }); });
 elements.zoomOut.addEventListener('click', () => { if (leafletMap) leafletMap.zoomOut(1, { animate: true }); });
