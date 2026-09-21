@@ -12,57 +12,6 @@
  * @property {string} [level]
  */
 
-/** @type {DataRecord[]} */
-const DEMO_DATA = [
-  { group: 'crime', groupLabel: 'Crime rates', indicator: 'Criminaliteit totaal', unit: '‰', year: 2021, area: 'West', value: 28.6, source: 'Politie / gemeente Utrecht', file: 'Veiligheid (wijken) - West.csv' },
-  { group: 'crime', groupLabel: 'Crime rates', indicator: 'Criminaliteit totaal', unit: '‰', year: 2022, area: 'West', value: 29.5, source: 'Politie / gemeente Utrecht', file: 'Veiligheid (wijken) - West.csv' },
-  { group: 'crime', groupLabel: 'Crime rates', indicator: 'Criminaliteit totaal', unit: '‰', year: 2023, area: 'West', value: 30.7, source: 'Politie / gemeente Utrecht', file: 'Veiligheid (wijken) - West.csv' },
-  { group: 'crime', groupLabel: 'Crime rates', indicator: 'Criminaliteit totaal', unit: '‰', year: 2024, area: 'West', value: 31.9, source: 'Politie / gemeente Utrecht', file: 'Veiligheid (wijken) - West.csv' },
-  { group: 'crime', groupLabel: 'Crime rates', indicator: 'Criminaliteit totaal', unit: '‰', year: 2025, area: 'West', value: 35, source: 'Politie / gemeente Utrecht', file: 'Veiligheid (wijken) - West.csv' },
-  { group: 'crime', groupLabel: 'Crime rates', indicator: 'Criminaliteit totaal', unit: '‰', year: 2021, area: 'Utrecht', value: 33.6, source: 'Politie / gemeente Utrecht', file: 'Veiligheid (wijken) - West.csv' },
-  { group: 'crime', groupLabel: 'Crime rates', indicator: 'Criminaliteit totaal', unit: '‰', year: 2022, area: 'Utrecht', value: 36.2, source: 'Politie / gemeente Utrecht', file: 'Veiligheid (wijken) - West.csv' },
-  { group: 'crime', groupLabel: 'Crime rates', indicator: 'Criminaliteit totaal', unit: '‰', year: 2023, area: 'Utrecht', value: 37, source: 'Politie / gemeente Utrecht', file: 'Veiligheid (wijken) - West.csv' },
-  { group: 'crime', groupLabel: 'Crime rates', indicator: 'Criminaliteit totaal', unit: '‰', year: 2024, area: 'Utrecht', value: 35.5, source: 'Politie / gemeente Utrecht', file: 'Veiligheid (wijken) - West.csv' },
-  { group: 'crime', groupLabel: 'Crime rates', indicator: 'Criminaliteit totaal', unit: '‰', year: 2025, area: 'Utrecht', value: 38.7, source: 'Politie / gemeente Utrecht', file: 'Veiligheid (wijken) - West.csv' },
-  { group: 'violence', groupLabel: 'Violence', indicator: 'Geweld totaal', unit: '‰', year: 2021, area: 'West', value: 2, source: 'Politie / gemeente Utrecht', file: 'Geweld per 1000 inwoners plus arbeidsplaatsen - West.csv' },
-  { group: 'violence', groupLabel: 'Violence', indicator: 'Geweld totaal', unit: '‰', year: 2022, area: 'West', value: 2.2, source: 'Politie / gemeente Utrecht', file: 'Geweld per 1000 inwoners plus arbeidsplaatsen - West.csv' },
-  { group: 'violence', groupLabel: 'Violence', indicator: 'Geweld totaal', unit: '‰', year: 2023, area: 'West', value: 1.8, source: 'Politie / gemeente Utrecht', file: 'Geweld per 1000 inwoners plus arbeidsplaatsen - West.csv' },
-  { group: 'violence', groupLabel: 'Violence', indicator: 'Geweld totaal', unit: '‰', year: 2024, area: 'West', value: 1.9, source: 'Politie / gemeente Utrecht', file: 'Geweld per 1000 inwoners plus arbeidsplaatsen - West.csv' },
-  { group: 'violence', groupLabel: 'Violence', indicator: 'Geweld totaal', unit: '‰', year: 2025, area: 'West', value: 2.3, source: 'Politie / gemeente Utrecht', file: 'Geweld per 1000 inwoners plus arbeidsplaatsen - West.csv' },
-  { group: 'violence', groupLabel: 'Violence', indicator: 'Geweld totaal', unit: '‰', year: 2021, area: 'Utrecht', value: 2.7, source: 'Politie / gemeente Utrecht', file: 'Geweld per 1000 inwoners plus arbeidsplaatsen - West.csv' },
-  { group: 'violence', groupLabel: 'Violence', indicator: 'Geweld totaal', unit: '‰', year: 2022, area: 'Utrecht', value: 2.9, source: 'Politie / gemeente Utrecht', file: 'Geweld per 1000 inwoners plus arbeidsplaatsen - West.csv' },
-  { group: 'violence', groupLabel: 'Violence', indicator: 'Geweld totaal', unit: '‰', year: 2023, area: 'Utrecht', value: 2.6, source: 'Politie / gemeente Utrecht', file: 'Geweld per 1000 inwoners plus arbeidsplaatsen - West.csv' },
-  { group: 'violence', groupLabel: 'Violence', indicator: 'Geweld totaal', unit: '‰', year: 2024, area: 'Utrecht', value: 2.8, source: 'Politie / gemeente Utrecht', file: 'Geweld per 1000 inwoners plus arbeidsplaatsen - West.csv' },
-  { group: 'violence', groupLabel: 'Violence', indicator: 'Geweld totaal', unit: '‰', year: 2025, area: 'Utrecht', value: 3, source: 'Politie / gemeente Utrecht', file: 'Geweld per 1000 inwoners plus arbeidsplaatsen - West.csv' },
-  { group: 'street', groupLabel: 'Street crime', indicator: 'Overval', unit: 'aantal', year: 2021, area: 'West', value: 1, source: 'Politie / gemeente Utrecht', file: 'Aantal overvallen en straatroof - West.csv' },
-  { group: 'street', groupLabel: 'Street crime', indicator: 'Overval', unit: 'aantal', year: 2025, area: 'West', value: 1, source: 'Politie / gemeente Utrecht', file: 'Aantal overvallen en straatroof - West.csv' },
-  { group: 'street', groupLabel: 'Street crime', indicator: 'Straatroof', unit: 'aantal', year: 2021, area: 'West', value: 4, source: 'Politie / gemeente Utrecht', file: 'Aantal overvallen en straatroof - West.csv' },
-  { group: 'street', groupLabel: 'Street crime', indicator: 'Straatroof', unit: 'aantal', year: 2025, area: 'West', value: 5, source: 'Politie / gemeente Utrecht', file: 'Aantal overvallen en straatroof - West.csv' },
-  { group: 'perception', groupLabel: 'Perception', indicator: 'Voelt zich wel eens onveilig', unit: '%', year: 2021, area: 'West', value: 35.2295870248644, source: 'Onderzoek & Advies, gemeente Utrecht', file: 'Voelt zich wel eens onveilig (in eigen buurt) - West.csv' },
-  { group: 'perception', groupLabel: 'Perception', indicator: 'Voelt zich wel eens onveilig', unit: '%', year: 2023, area: 'West', value: 39.0228763879325, source: 'Onderzoek & Advies, gemeente Utrecht', file: 'Voelt zich wel eens onveilig (in eigen buurt) - West.csv' },
-  { group: 'perception', groupLabel: 'Perception', indicator: 'Voelt zich wel eens onveilig', unit: '%', year: 2025, area: 'West', value: 39.8992267429492, source: 'Onderzoek & Advies, gemeente Utrecht', file: 'Voelt zich wel eens onveilig (in eigen buurt) - West.csv' },
-  { group: 'perception', groupLabel: 'Perception', indicator: 'Voelt zich wel eens onveilig', unit: '%', year: 2021, area: 'Utrecht', value: 30.0687755029461, source: 'Onderzoek & Advies, gemeente Utrecht', file: 'Voelt zich wel eens onveilig (in eigen buurt) - West.csv' },
-  { group: 'perception', groupLabel: 'Perception', indicator: 'Voelt zich wel eens onveilig', unit: '%', year: 2025, area: 'Utrecht', value: 37.0019628447802, source: 'Onderzoek & Advies, gemeente Utrecht', file: 'Voelt zich wel eens onveilig (in eigen buurt) - West.csv' },
-  { group: 'perception', groupLabel: 'Perception', indicator: 'Last van jongeren op straat', unit: '%', year: 2021, area: 'West', value: 22.9009353747232, source: 'Onderzoek & Advies, gemeente Utrecht', file: 'Heeft vaak last van jongeren op straat (in de buurt) - West.csv' },
-  { group: 'perception', groupLabel: 'Perception', indicator: 'Last van jongeren op straat', unit: '%', year: 2023, area: 'West', value: 19.1439396282169, source: 'Onderzoek & Advies, gemeente Utrecht', file: 'Heeft vaak last van jongeren op straat (in de buurt) - West.csv' },
-  { group: 'perception', groupLabel: 'Perception', indicator: 'Last van jongeren op straat', unit: '%', year: 2025, area: 'West', value: 18.8360837088914, source: 'Onderzoek & Advies, gemeente Utrecht', file: 'Heeft vaak last van jongeren op straat (in de buurt) - West.csv' },
-  { group: 'perception', groupLabel: 'Perception', indicator: 'Last van jongeren op straat', unit: '%', year: 2025, area: 'Noordwest', value: 23.1134574520559, source: 'Onderzoek & Advies, gemeente Utrecht', file: 'Heeft vaak last van jongeren op straat (in de buurt) - West-2.csv' },
-  { group: 'perception', groupLabel: 'Perception', indicator: 'Last van jongeren op straat', unit: '%', year: 2025, area: 'Overvecht', value: 39.166565874753, source: 'Onderzoek & Advies, gemeente Utrecht', file: 'Heeft vaak last van jongeren op straat (in de buurt) - West-2.csv' },
-  { group: 'perception', groupLabel: 'Perception', indicator: 'Last van jongeren op straat', unit: '%', year: 2025, area: 'Noordoost', value: 9.96612996547672, source: 'Onderzoek & Advies, gemeente Utrecht', file: 'Heeft vaak last van jongeren op straat (in de buurt) - West-2.csv' },
-  { group: 'perception', groupLabel: 'Perception', indicator: 'Last van jongeren op straat', unit: '%', year: 2025, area: 'Oost', value: 10.064872960523, source: 'Onderzoek & Advies, gemeente Utrecht', file: 'Heeft vaak last van jongeren op straat (in de buurt) - West-2.csv' },
-  { group: 'perception', groupLabel: 'Perception', indicator: 'Last van jongeren op straat', unit: '%', year: 2025, area: 'Binnenstad', value: 27.4276383835437, source: 'Onderzoek & Advies, gemeente Utrecht', file: 'Heeft vaak last van jongeren op straat (in de buurt) - West-2.csv' },
-  { group: 'perception', groupLabel: 'Perception', indicator: 'Last van jongeren op straat', unit: '%', year: 2025, area: 'Zuid', value: 19.9864412150216, source: 'Onderzoek & Advies, gemeente Utrecht', file: 'Heeft vaak last van jongeren op straat (in de buurt) - West-2.csv' },
-  { group: 'perception', groupLabel: 'Perception', indicator: 'Last van jongeren op straat', unit: '%', year: 2025, area: 'Zuidwest', value: 30.7454764222592, source: 'Onderzoek & Advies, gemeente Utrecht', file: 'Heeft vaak last van jongeren op straat (in de buurt) - West-2.csv' },
-  { group: 'perception', groupLabel: 'Perception', indicator: 'Last van jongeren op straat', unit: '%', year: 2025, area: 'Leidsche Rijn', value: 22.6395969380502, source: 'Onderzoek & Advies, gemeente Utrecht', file: 'Heeft vaak last van jongeren op straat (in de buurt) - West-2.csv' },
-  { group: 'perception', groupLabel: 'Perception', indicator: 'Last van jongeren op straat', unit: '%', year: 2025, area: 'Vleuten-De Meern', value: 13.2168499729996, source: 'Onderzoek & Advies, gemeente Utrecht', file: 'Heeft vaak last van jongeren op straat (in de buurt) - West-2.csv' },
-  { group: 'crime', groupLabel: 'Crime rates', indicator: 'Autokraak', unit: '‰', year: 2025, area: 'West', value: 7.8, source: 'Politie / gemeente Utrecht', file: 'Misdrijven per 1000 inwoners plus arbeidsplaatsen - West.csv' },
-  { group: 'crime', groupLabel: 'Crime rates', indicator: 'Fietsdiefstal', unit: '‰', year: 2025, area: 'West', value: 5.16494764191796, source: 'Politie / gemeente Utrecht', file: 'Misdrijven per 1000 inwoners plus arbeidsplaatsen - West.csv' },
-  { group: 'crime', groupLabel: 'Crime rates', indicator: 'Woninginbraken', unit: '‰', year: 2025, area: 'West', value: 4.8, source: 'Politie / gemeente Utrecht', file: 'Misdrijven per 1000 inwoners plus arbeidsplaatsen - West.csv' },
-];
-
-const DEMO_GROUP_LABELS = { crime: 'Criminaliteit', violence: 'Geweld', street: 'Straatcriminaliteit', perception: 'Veiligheidsbeleving' };
-DEMO_DATA.forEach((record) => { record.groupLabel = DEMO_GROUP_LABELS[record.group] || record.groupLabel; });
-
 /**
  * @typedef {Object} BoundaryProperties
  * @property {string} [gemeentenaam]
@@ -128,7 +77,7 @@ const METRIC_CONFIG = {
 
 const AVERAGE_GROUPS = new Set(['intimidation', 'perception', 'noise', 'violence']);
 const DATA_SOURCE = 'utrecht.incijfers.nl';
-const state = { data: DEMO_DATA.map((record) => ({ ...record, groupLabel: METRIC_CONFIG[record.group].title, level: 'wijken', source: DATA_SOURCE })), years: [], year: '2025', search: '', areaLevel: 'buurten', activeLayers: new Set(), activeIndicators: new Set(), aggregateGroups: new Set(), filtersInitialized: false, expandedGroups: new Set(), dataIndex: null, filterCache: new Map(), labelsVisible: false, showAllYears: false };
+const state = { data: [], years: [], year: '2025', search: '', areaLevel: 'buurten', activeLayers: new Set(), activeIndicators: new Set(), aggregateGroups: new Set(), filtersInitialized: false, expandedGroups: new Set(), dataIndex: null, filterCache: new Map(), labelsVisible: false, showAllYears: false, dataLoadError: false };
 const WIJK_API_URL = 'https://api.pdok.nl/cbs/wijken-en-buurten-2025/ogc/v1/collections/wijken/items?f=json&limit=100&filter=gemeentenaam%3D%27Utrecht%27';
 const BUURT_API_URL = 'https://api.pdok.nl/cbs/wijken-en-buurten-2025/ogc/v1/collections/buurten/items?f=json&limit=200&filter=gemeentenaam%3D%27Utrecht%27';
 const UTRECHT_CENTER = [52.0907, 5.1214];
@@ -582,6 +531,10 @@ function areaLevelLabel(level = visibleAreaLevel()) {
 function renderMap() {
   boundaryFeatures = visibleBoundaryFeatures();
   if (!leafletMap || !boundaryFeatures.length) return;
+  if (state.dataLoadError) {
+    elements.mapStatus.textContent = 'GEGEVENS NIET BESCHIKBAAR';
+    return;
+  }
   const level = visibleAreaLevel();
   const boundaryRecordIndex = buildBoundaryRecordIndex(filteredRecords(), level);
   const records = boundaryFeatures.flatMap((feature) => recordsForBoundaryArea(areaFromFeature(feature), boundaryRecordIndex));
@@ -731,16 +684,29 @@ function yearChangeLabel(record) {
   return `<span class="table-change ${tone}">${direction}${formatValue(change.value, record.unit)} <small>t.o.v. ${change.year}</small></span>`;
 }
 
-function renderFallbackData() {
-  state.years = [...new Set(state.data.map((record) => record.year))].sort((a, b) => a - b);
-  syncActiveLayers();
+function renderDataLoadError() {
+  state.dataLoadError = true;
+  state.data = [];
+  state.years = [];
+  state.dataIndex = null;
+  state.activeLayers = new Set();
+  state.activeIndicators = new Set();
+  state.aggregateGroups = new Set();
   render();
 }
 
 function renderTable() {
   const body = elements.dataTableBody;
+  if (state.dataLoadError) {
+    body.innerHTML = '';
+    elements.emptyState.textContent = 'De gegevens konden niet worden geladen. Controleer of de CSV-bestanden beschikbaar zijn.';
+    elements.emptyState.hidden = false;
+    elements.tableHint.textContent = 'Gegevens niet beschikbaar';
+    return;
+  }
   const records = [...filteredRecords({ includeMissing: true, allYears: state.showAllYears })].sort((a, b) => b.year - a.year || a.area.localeCompare(b.area) || a.indicator.localeCompare(b.indicator));
   body.innerHTML = records.map((record) => `<tr><td>${record.area}</td><td>${record.level === 'buurten' ? 'Subwijk' : 'Wijk'}</td><td><span class="table-tag">${METRIC_CONFIG[record.group]?.title || record.groupLabel}</span>${record.indicator}</td><td>${record.year}</td><td>${formatValue(record.value, record.unit)}</td><td>${yearChangeLabel(record)}</td><td>${record.source}</td></tr>`).join('');
+  elements.emptyState.textContent = 'Geen gegevens gevonden met deze filters.';
   elements.emptyState.hidden = records.length > 0;
   const yearHint = state.showAllYears ? 'alle jaren' : state.year;
   elements.tableHint.textContent = `${records.length} actieve records • ${yearHint} • — betekent niet beschikbaar in de bron`;
@@ -829,6 +795,15 @@ function render(syncYear = false) {
   scheduleTableRender();
   const totalIndicators = new Set(state.data.map((record) => indicatorKey(record.group, record.indicator))).size;
   elements.activeCount.textContent = `${activeIndicatorCount()} / ${totalIndicators} indicatoren`;
+  elements.yearRange.disabled = state.dataLoadError;
+  elements.exportView.disabled = state.dataLoadError;
+  if (state.dataLoadError) {
+    elements.activeCount.textContent = 'Gegevens niet beschikbaar';
+    elements.mapStatus.textContent = 'GEGEVENS NIET BESCHIKBAAR';
+    elements.yearValue.textContent = '—';
+    elements.yearMin.textContent = '—';
+    elements.yearMax.textContent = '—';
+  }
 }
 
 function setGroup(group, isActive) {
@@ -903,22 +878,23 @@ async function loadBundledData() {
   try {
     const responses = await Promise.all(files.map((file) => fetch(`data/${encodeURIComponent(file)}`)));
     if (responses.some((response) => !response.ok)) {
-      renderFallbackData();
+      renderDataLoadError();
       return;
     }
     const imported = (await Promise.all(responses.map(async (response, index) => parseCsv(await response.text(), files[index])))).flat();
     const unique = new Map(imported.map((record) => [`${record.level}|${record.group}|${record.indicator}|${record.unit}|${record.year}|${record.area}|${record.value}`, record]));
     if (!unique.size) {
-      renderFallbackData();
+      renderDataLoadError();
       return;
     }
+    state.dataLoadError = false;
     state.data = [...unique.values()];
     state.years = [...new Set(state.data.map((record) => record.year))].sort((a, b) => a - b);
     state.year = String(state.years[state.years.length - 1] || 2025);
     syncActiveLayers();
     render();
   } catch {
-    renderFallbackData();
+    renderDataLoadError();
   }
 }
 
